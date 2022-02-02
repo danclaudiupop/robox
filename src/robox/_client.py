@@ -158,7 +158,6 @@ class Robox(httpx.Client, RoboxMixin):
             transport=transport,
             app=app,
         )
-
     def _init_transport(
         self,
         verify: VerifyTypes = True,
@@ -321,7 +320,6 @@ class AsyncRobox(httpx.AsyncClient, RoboxMixin):
         self.total_requests = 0
         self._history = BrowserHistory()
         self._request_counter = itertools.count(start=1)
-
         super().__init__(
             auth=auth,
             params=params,
