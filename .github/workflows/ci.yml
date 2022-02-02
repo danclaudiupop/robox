@@ -36,7 +36,7 @@ jobs:
         run: poetry install --no-interaction
 
       - name: Code quality
-        run: poetry run pre-commit run --all-files
+        run: .venv/bin/pre-commit run --all-files
 
       - name: Run tests
         run: |
