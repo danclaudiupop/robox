@@ -158,6 +158,7 @@ class Robox(httpx.Client, RoboxMixin):
             transport=transport,
             app=app,
         )
+
     def _init_transport(
         self,
         verify: VerifyTypes = True,
