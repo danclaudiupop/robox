@@ -1,5 +1,4 @@
-from collections.abc import Iterator
-from typing import Generator, List, Optional, Sequence, TypeVar, overload
+from typing import Generator, Iterator, List, Optional, Sequence, TypeVar, overload
 
 import bs4
 
