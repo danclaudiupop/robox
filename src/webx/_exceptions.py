@@ -1,10 +1,10 @@
-class WebxError(Exception):
+class RoboxError(Exception):
     ...
 
 
-class MultipleFieldsReturned(WebxError):
+class MultipleFieldsReturned(RoboxError):
     ...
 
 
-class InvalidValue(WebxError):
+class InvalidValue(RoboxError):
     ...

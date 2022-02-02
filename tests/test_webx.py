@@ -1,7 +1,7 @@
 import pytest
 from bs4 import BeautifulSoup
 
-from webx._controls import Checkbox, Option, Select
+from robox._controls import Checkbox, Option, Select
 
 
 class TestCheckboxField:

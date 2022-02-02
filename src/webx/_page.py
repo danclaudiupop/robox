@@ -8,9 +8,9 @@ from urllib.parse import urljoin
 import httpx
 from bs4 import BeautifulSoup, Tag
 
-from webx._controls import Submit
-from webx._form import Form
-from webx._link import (
+from robox._controls import Submit
+from robox._form import Form
+from robox._link import (
     Link,
     find_all_a_tags_with_href,
     remove_duplicate_links,
@@ -19,15 +19,15 @@ from webx._link import (
 
 
 class BasePage:
-    def __init__(self, response: httpx.Response, webx) -> None:
+    def __init__(self, response: httpx.Response, robox) -> None:
         self.response = response
         self.content = self.response.content
         self.url = self.response.url
-        self.webx = webx
+        self.robox = robox
 
     @cached_property
     def parsed(self) -> BeautifulSoup:
-        return BeautifulSoup(self.content, **self.webx.soup_kwargs)
+        return BeautifulSoup(self.content, **self.robox.soup_kwargs)
 
     @cached_property
     def title(self) -> str:
@@ -105,7 +105,7 @@ class Page(BasePage):
     ) -> "Page":
         payload = form.to_httpx(submit_button)
         headers = self._prepare_referer_header()
-        return self.webx.open(
+        return self.robox.open(
             url=self.response.url.join(form.action),
             method=form.method,
             headers=headers,
@@ -113,10 +113,10 @@ class Page(BasePage):
         )
 
     def follow_link(self, link: Link) -> "Page":
-        return self.webx.open(urljoin(str(self.url), link.href))
+        return self.robox.open(urljoin(str(self.url), link.href))
 
     def follow_link_by_tag(self, tag: Tag) -> "Page":
-        return self.webx.open(urljoin(str(self.url), tag["href"]))
+        return self.robox.open(urljoin(str(self.url), tag["href"]))
 
     def follow_link_by_text(self, text: str) -> "Page":
         link = self._prepare_link_text(text)
@@ -129,7 +129,7 @@ class AsyncPage(BasePage):
     ) -> "AsyncPage":
         payload = form.to_httpx(submit_button)
         headers = self._get_referer_header()
-        return await self.webx.open(
+        return await self.robox.open(
             url=self.response.url.join(form.action),
             method=form.method,
             headers=headers,
@@ -137,10 +137,10 @@ class AsyncPage(BasePage):
         )
 
     async def follow_link(self, link: Link) -> "AsyncPage":
-        return await self.webx.open(urljoin(str(self.url), link.href))
+        return await self.robox.open(urljoin(str(self.url), link.href))
 
     async def follow_link_by_tag(self, tag: Tag) -> "AsyncPage":
-        return await self.webx.open(urljoin(str(self.url), tag["href"]))
+        return await self.robox.open(urljoin(str(self.url), tag["href"]))
 
     async def follow_link_by_text(self, text: str) -> "AsyncPage":
         link = self._get_link_text(text)

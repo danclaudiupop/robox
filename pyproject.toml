@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "webx"
+name = "robox"
 version = "0.1.0"
-description = "Webx is a simple library for exploring/scraping the web or testing a website you’re developing."
+description = "Robox is a simple library for exploring/scraping the web or testing a website you’re developing."
 authors = ["Dan Claudiu Pop <danclaudiupop@gmail.com>"]
 
 [tool.poetry.dependencies]

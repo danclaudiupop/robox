@@ -2,7 +2,7 @@ from typing import Generator, Iterator, List, Optional, Sequence, TypeVar, overl
 
 import bs4
 
-from webx._exceptions import MultipleFieldsReturned
+from robox._exceptions import MultipleFieldsReturned
 
 
 class Field:

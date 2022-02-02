@@ -30,13 +30,13 @@ from httpx._types import (
 from httpx_cache import AsyncCacheControlTransport, CacheControlTransport
 from httpx_cache.cache import BaseCache
 
-from webx import LOG
-from webx._download import async_download_file, download_file
-from webx._history import BrowserHistory
-from webx._page import AsyncPage, Page
+from robox import LOG
+from robox._download import async_download_file, download_file
+from robox._history import BrowserHistory
+from robox._page import AsyncPage, Page
 
 
-class WebxMixin:
+class RoboxMixin:
     @property
     def user_agent(self) -> str:
         return self._user_agent
@@ -65,7 +65,7 @@ class WebxMixin:
                 )
                 raise exc
 
-        page = page_cls(response, webx=self)
+        page = page_cls(response, robox=self)
         if self.history:
             self._history.location = page
         return page
@@ -93,7 +93,7 @@ class WebxMixin:
         return f"{self.__class__.__name__} - {self.url}"
 
 
-class Webx(httpx.Client, WebxMixin):
+class Robox(httpx.Client, RoboxMixin):
     def __init__(
         self,
         *,
@@ -278,7 +278,7 @@ class Webx(httpx.Client, WebxMixin):
         return self.open(page.url)
 
 
-class AsyncWebx(httpx.AsyncClient, WebxMixin):
+class AsyncRobox(httpx.AsyncClient, RoboxMixin):
     def __init__(
         self,
         *,

@@ -7,7 +7,7 @@ from typing import Callable
 import aiofiles
 import httpx
 
-from webx import LOG
+from robox import LOG
 
 
 def get_filename_from_url(response: httpx.Response) -> str:
