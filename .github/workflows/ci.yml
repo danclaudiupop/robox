@@ -3,7 +3,7 @@ on:
   - push
 
 jobs:
-  tests:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
