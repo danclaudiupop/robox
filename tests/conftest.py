@@ -1,5 +1,4 @@
 import pytest
-
 from bs4 import BeautifulSoup
 
 
@@ -7,4 +6,5 @@ from bs4 import BeautifulSoup
 def beautiful_soup():
     def _(html):
         return BeautifulSoup(html, features="html.parser")
+
     return _

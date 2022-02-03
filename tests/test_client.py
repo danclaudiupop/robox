@@ -1,7 +1,8 @@
 import httpx
-import respx
 import pytest
-from robox import Robox, AsyncRobox
+import respx
+
+from robox import AsyncRobox, Robox
 
 TEST_URL = "https://foo.bar"
 
