@@ -42,18 +42,19 @@ def handle_error(func: Callable) -> Callable:
     def wrapper(client, url, destination_folder):
         destination = setup_destination(url, destination_folder)
         try:
-            if not asyncio.iscoroutinefunction(func):
-                return func(client, url, destination)
-            else:
+            if asyncio.iscoroutinefunction(func):
 
                 async def _():
                     return await func(client, url, destination)
 
                 return _()
+            else:
+                return func(client, url, destination)
         except Exception as e:
             LOG.error(
                 f"Downloading from {url} has failed!\nThe exception thrown is {e}"
             )
+            raise
 
     return wrapper
 

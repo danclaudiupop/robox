@@ -13,6 +13,7 @@ from httpx._config import (
     Limits,
     Proxy,
 )
+from httpx._models import URL
 from httpx._types import (
     AuthTypes,
     CertTypes,
@@ -32,6 +33,7 @@ from httpx_cache.cache import BaseCache
 
 from robox import LOG
 from robox._download import async_download_file, download_file
+from robox._exceptions import RoboxError
 from robox._history import BrowserHistory
 from robox._page import AsyncPage, Page
 
@@ -47,6 +49,13 @@ class RoboxMixin:
 
     def get_history(self) -> tp.List[tp.Union[Page, AsyncPage]]:
         return self._history.get_locations()
+
+    @property
+    def current_url(self) -> URL:
+        if latest_entry := self._history.latest_entry():
+            return latest_entry.url
+        else:
+            raise RoboxError("Not tracking history")
 
     def _increment_request_counter(self) -> None:
         self.total_requests = next(self._request_counter)
@@ -90,7 +99,10 @@ class RoboxMixin:
         LOG.debug(msg)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__} - {self.url}"
+        try:
+            return f"{self.__class__.__name__} - {self.current_url}"
+        except RoboxError:
+            return f"{self.__class__.__name__}"
 
 
 class Robox(httpx.Client, RoboxMixin):
@@ -136,7 +148,6 @@ class Robox(httpx.Client, RoboxMixin):
         self.total_requests = 0
         self._history = BrowserHistory()
         self._request_counter = itertools.count(start=1)
-
         super().__init__(
             auth=auth,
             params=params,
@@ -256,8 +267,8 @@ class Robox(httpx.Client, RoboxMixin):
         self._increment_request_counter()
         return self._build_page_response(response, Page)
 
-    def download_file(self, url: str, destination_folder: str) -> str:
-        return download_file(self.client, url, destination_folder)
+    def download_file(self, *, url: str, destination_folder: str) -> str:
+        return download_file(self, url, destination_folder)
 
     def refresh(self) -> Page:
         page = self._history.location
@@ -440,8 +451,8 @@ class AsyncRobox(httpx.AsyncClient, RoboxMixin):
         self._increment_request_counter()
         return self._build_page_response(response, AsyncPage)
 
-    async def download_file(self, url: str, destination_folder: str) -> str:
-        return await async_download_file(self.client, url, destination_folder)
+    async def download_file(self, *, url: str, destination_folder: str) -> str:
+        return await async_download_file(self, url, destination_folder)
 
     async def refresh(self) -> AsyncPage:
         page = self._history.location

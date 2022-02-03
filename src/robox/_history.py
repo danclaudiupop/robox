@@ -21,8 +21,10 @@ class BrowserHistory:
 
     @location.setter
     def location(self, value: tp.Any) -> None:
-        self._back.append(value)
-        self._forward.clear()
+        latest_entry = self.latest_entry()
+        if not latest_entry or latest_entry.url != value.url:
+            self._back.append(value)
+            self._forward.clear()
 
     def back(self, i: int = 1) -> tp.Any:
         if i > 0:
@@ -52,3 +54,9 @@ class BrowserHistory:
         result.extend((i + 1, location) for i, location in enumerate(self._forward))
         result.reverse()
         return result
+
+    def latest_entry(self) -> tp.Optional[tp.Any]:
+        try:
+            return self._back[-1]
+        except IndexError:
+            return None

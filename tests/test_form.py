@@ -1,12 +1,11 @@
 import pytest
-from bs4 import BeautifulSoup
 
 from robox._exceptions import InvalidValue
 from robox._form import Form
 
 
 @pytest.fixture
-def parsed_select_form():
+def parsed_select_form(beautiful_soup):
     def generate_form(multiple=False):
         select_form = """
             <form>
@@ -17,7 +16,7 @@ def parsed_select_form():
                 </select>
             </form>
         """
-        parsed = BeautifulSoup(select_form, features="html.parser")
+        parsed = beautiful_soup(select_form)
         if multiple:
             parsed.form.find("select")["multiple"] = "multiple"
         return parsed
@@ -56,7 +55,7 @@ def test_select_cannot_select_multiple_options(parsed_select_form):
 
 
 @pytest.fixture
-def parsed_checkbox_form():
+def parsed_checkbox_form(beautiful_soup):
     checkbox_form = """
         <form>
             <div>
@@ -69,7 +68,7 @@ def parsed_checkbox_form():
             </div>
         </form>
     """
-    return BeautifulSoup(checkbox_form, features="html.parser")
+    return beautiful_soup(checkbox_form)
 
 
 def test_checkbox(parsed_checkbox_form):
@@ -85,7 +84,7 @@ def test_checkbox_invalid_option(parsed_checkbox_form):
     assert exc.value.args[0] == "Invalid value for <Checkbox name='animal'>"
 
 
-def test_checkbox_without_value():
+def test_checkbox_without_value(beautiful_soup):
     checkbox_form = """
         <form>
             <div>
@@ -94,26 +93,26 @@ def test_checkbox_without_value():
             </div>
         </form>
     """
-    parsed = BeautifulSoup(checkbox_form, features="html.parser")
+    parsed = beautiful_soup(checkbox_form)
     form = Form(parsed)
     form.check("dog", values=["on"])
     assert form.to_httpx() == {"params": {"dog": "on"}}
 
 
-def test_fill_in_input():
+def test_fill_in_input(beautiful_soup):
     input_form = """
         <form>
             <label for="name">Name:</label>
             <input type="text" id="name" name="name">
         </form>
     """
-    parsed = BeautifulSoup(input_form, features="html.parser")
+    parsed = beautiful_soup(input_form)
     form = Form(parsed)
     form.fill_in("Name:", value="foo")
     assert form.to_httpx() == {"params": {"name": "foo"}}
 
 
-def test_fill_in_textarea():
+def test_fill_in_textarea(beautiful_soup):
     textarea_form = """
         <form>
             <label for="story">Tell us your story:</label>
@@ -122,14 +121,14 @@ def test_fill_in_textarea():
             </textarea>
         </form>
     """
-    parsed = BeautifulSoup(textarea_form, features="html.parser")
+    parsed = beautiful_soup(textarea_form)
     form = Form(parsed)
     form.fill_in("story", value="foo")
     assert form.to_httpx() == {"params": {"story": "foo"}}
 
 
 @pytest.fixture
-def parsed_input_file_form():
+def parsed_input_file_form(beautiful_soup):
     def generate_form(multiple=False):
         image_form = """
             <form>
@@ -137,7 +136,7 @@ def parsed_input_file_form():
                 <input type="file" id="doc" name="doc" accept=".txt">
             </form>
         """
-        parsed = BeautifulSoup(image_form, features="html.parser")
+        parsed = beautiful_soup(image_form)
         if multiple:
             parsed.form.find("input")["multiple"] = "multiple"
         return parsed

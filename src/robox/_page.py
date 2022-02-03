@@ -25,6 +25,10 @@ class BasePage:
         self.url = self.response.url
         self.robox = robox
 
+    @property
+    def status_code(self) -> int:
+        return self.response.status_code
+
     @cached_property
     def parsed(self) -> BeautifulSoup:
         return BeautifulSoup(self.content, **self.robox.soup_kwargs)
@@ -91,9 +95,19 @@ class BasePage:
 
     def debug_page(self) -> None:
         with tempfile.NamedTemporaryFile("w", delete=False, suffix=".html") as f:
-            url = "file://" + f.name
+            url = f"file://{f.name}"
             f.write(str(self.parsed))
         webbrowser.open(url)
+
+    def __hash__(self) -> int:
+        return hash(tuple([self.parsed, self.url]))
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, BasePage)
+            and self.parsed == other.parsed
+            and self.url == other.url
+        )
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} url={self.url}>"

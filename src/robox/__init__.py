@@ -23,3 +23,7 @@ LOG = logging.getLogger(__name__)
 LOG.addHandler(FILE_HANDLER)
 LOG.addHandler(STREAM_HANDLER)
 LOG.setLevel(logging.DEBUG)
+
+from ._client import AsyncRobox, Robox  # noqa: E402
+
+__all__ = ["Robox", "AsyncRobox"]
