@@ -35,6 +35,10 @@ class BasePage:
     def status_code(self) -> int:
         return self.response.status_code
 
+    @property
+    def from_cache(self) -> bool:
+        return self.response.from_cache
+
     @cached_property
     def parsed(self) -> BeautifulSoup:
         return BeautifulSoup(self.content, **self.robox.soup_kwargs)

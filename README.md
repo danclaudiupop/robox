@@ -19,16 +19,16 @@ Robox has all the standard features of httpx, including async, plus:
 from robox import Robox
 
 
-robox = Robox()
-page = robox.open("https://httpbin.org/forms/post")
-form = page.get_form()
-form.fill_in("custname", value="foo")
-form.check("topping", values=["Onion"])
-form.choose("size", option="Medium")
-form.fill_in("comments", value="all good in the hood")
-form.fill_in("delivery", value="13:37")
-page = page.submit_form(form)
-assert page.url == "https://httpbin.org/post"
+with Robox() as robox:
+    page = robox.open("https://httpbin.org/forms/post")
+    form = page.get_form()
+    form.fill_in("custname", value="foo")
+    form.check("topping", values=["Onion"])
+    form.choose("size", option="Medium")
+    form.fill_in("comments", value="all good in the hood")
+    form.fill_in("delivery", value="13:37")
+    page = page.submit_form(form)
+    assert page.url == "https://httpbin.org/post"
 ```
 
 or use async version:
@@ -52,4 +52,17 @@ async def main():
 
 
 asyncio.run(main())
+```
+
+Caching can be easily configured via [httpx-cache](https://obendidi.github.io/httpx-cache/)
+
+```python
+from robox import Robox, DictCache, FileCache
+
+
+with Robox(cache=DictCache()) as robox:
+    p1 = robox.open("https://httpbin.org/get")
+    assert not p1.from_cache
+    p2 = robox.open("https://httpbin.org/get")
+    assert p2.from_cache
 ```
