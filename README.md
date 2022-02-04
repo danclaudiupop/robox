@@ -2,6 +2,7 @@
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/danclaudiupop/robox.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/danclaudiupop/robox/context:python)
 [![Run tests](https://github.com/danclaudiupop/robox/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/danclaudiupop/robox/actions/workflows/ci.yml)
 [![view examples](https://img.shields.io/badge/learn%20by-examples-0077b3.svg)](https://github.com/danclaudiupop/robox/tree/main/examples)
+[![PyPI version](https://badge.fury.io/py/robox.svg)](https://badge.fury.io/py/robox)
 
 ## Overview
 Robox is a simple library with a clean interface for exploring/scraping the web or testing a website you’re developing. Robox can fetch a page, click on links and buttons, and fill out and submit forms. Robox is built on top of two excelent libraries: [httpx](https://www.google.com) and [beautifulsoup4](https://www.crummy.com/software/BeautifulSoup/bs4/doc/).
@@ -67,3 +68,14 @@ with Robox(cache=DictCache()) as robox:
     p2 = robox.open("https://httpbin.org/get")
     assert p2.from_cache
 ```
+
+## Installation
+
+Using pip:
+
+```sh
+pip install robox
+```
+
+Robox requires Python 3.8+.
+See [Changelog](https://github.com/lundberg/respx/blob/master/CHANGELOG.md) for changes.
