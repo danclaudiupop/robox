@@ -1,6 +1,5 @@
 from robox import Robox
 
-
 robox = Robox()
 page = robox.open("https://httpbin.org/forms/post")
 form = page.get_form()
