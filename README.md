@@ -78,4 +78,4 @@ pip install robox
 ```
 
 Robox requires Python 3.8+.
-See [Changelog](https://github.com/lundberg/respx/blob/master/CHANGELOG.md) for changes.
+See [Changelog](https://github.com/danclaudiupop/robox/blob/main/CHANGELOG.md) for changes.
