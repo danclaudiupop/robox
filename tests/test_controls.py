@@ -1,7 +1,7 @@
 import pytest
 from bs4 import BeautifulSoup
 
-from robox._controls import Checkbox, Option, Select
+from robox._controls import Checkbox, Input, Option, Select
 
 
 class TestCheckboxField:
@@ -82,3 +82,16 @@ class TestSelectField:
         option = Option(tag)
         option.select()
         assert option.tag.has_attr("selected")
+
+
+@pytest.mark.parametrize(
+    "html, expected_result",
+    [
+        ('<label for="foo">Bar</label><input type="text" id="foo" name="foo">', "Bar"),
+        ('<label>Bar<input type="checkbox" name="peas"></label>', "Bar"),
+    ],
+)
+def test_field_label(beautiful_soup, html, expected_result):
+    tag = beautiful_soup(html).find("input")
+    input_field = Input(tag)
+    assert input_field.label == expected_result

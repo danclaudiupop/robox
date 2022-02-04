@@ -28,8 +28,7 @@ class Field:
 
     @property
     def label(self) -> Optional[str]:
-        label = self.tag.parent.find("label")
-        if label:
+        if label := self.tag.find_previous("label"):
             return label.text.strip()
 
     @property
