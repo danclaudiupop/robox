@@ -1,6 +1,8 @@
 import typing as tp
 from functools import lru_cache, singledispatch
 
+from bs4.element import Tag
+
 from robox._controls import (
     Checkbox,
     Field,
@@ -16,7 +18,7 @@ from robox._exceptions import InvalidValue
 
 
 class Form:
-    def __init__(self, parsed_form) -> None:
+    def __init__(self, parsed_form: Tag) -> None:
         self.parsed_form = parsed_form
 
     @property

@@ -3,6 +3,7 @@ import tempfile
 import typing as tp
 import webbrowser
 from functools import cached_property
+from typing import TYPE_CHECKING
 from urllib.parse import urljoin
 
 import httpx
@@ -17,9 +18,14 @@ from robox._link import (
     remove_page_jumps_from_links,
 )
 
+if TYPE_CHECKING:
+    from robox import Robox
+
+T = tp.TypeVar("T", bound="Robox")
+
 
 class BasePage:
-    def __init__(self, response: httpx.Response, robox) -> None:
+    def __init__(self, response: httpx.Response, robox: T) -> None:
         self.response = response
         self.content = self.response.content
         self.url = self.response.url
@@ -50,7 +56,7 @@ class BasePage:
         if form:
             return Form(form)
 
-    def get_forms(self, *args, **kwargs) -> tp.List[Form]:
+    def get_forms(self, *args: tp.Any, **kwargs: tp.Any) -> tp.List[Form]:
         forms = self.find_all(name="form", *args, **kwargs)
         return [Form(form) for form in forms]
 
@@ -61,7 +67,7 @@ class BasePage:
         return headers
 
     def get_links(
-        self, only_internal_links: bool = False, *args, **kwargs
+        self, only_internal_links: bool = False, *args: tp.Any, **kwargs: tp.Any
     ) -> tp.Generator[Link, None, None]:
         links = find_all_a_tags_with_href(self.parsed, *args, **kwargs)
         links = remove_page_jumps_from_links(links)
@@ -71,18 +77,22 @@ class BasePage:
         for href, text in links:
             yield Link(href=href, text=text.strip())
 
-    def get_links_by_regex(self, regex: str, *args, **kwargs) -> tp.List[Link]:
+    def get_links_by_regex(
+        self, regex: str, *args: tp.Any, **kwargs: tp.Any
+    ) -> tp.List[Link]:
         return [
             link
             for link in self.get_links(*args, **kwargs)
             if re.search(regex, link.href)
         ]
 
-    def get_links_by_text(self, text: str, *args, **kwargs) -> tp.List[Link]:
+    def get_links_by_text(
+        self, text: str, *args: tp.Any, **kwargs: tp.Any
+    ) -> tp.List[Link]:
         return [
             link
             for link in self.get_links(*args, **kwargs)
-            if link.text.lower() == text.lower()
+            if text.lower() in link.text.lower()
         ]
 
     def _get_link_text(self, text: str) -> Link:
@@ -142,7 +152,7 @@ class AsyncPage(BasePage):
         self, form: Form, submit_button: tp.Union[str, Submit] = None
     ) -> "AsyncPage":
         payload = form.to_httpx(submit_button)
-        headers = self._get_referer_header()
+        headers = self._prepare_referer_header()
         return await self.robox.open(
             url=self.response.url.join(form.action),
             method=form.method,

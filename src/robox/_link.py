@@ -11,7 +11,9 @@ class Link(tp.NamedTuple):
         return f"<{self.__class__.__name__} text={self.text} href={self.href}>"
 
 
-def find_all_a_tags_with_href(parsed: BeautifulSoup, *args, **kwargs) -> tp.List[Tag]:
+def find_all_a_tags_with_href(
+    parsed: BeautifulSoup, *args: tp.Any, **kwargs: tp.Any
+) -> tp.List[Tag]:
     for a in parsed.find_all("a", href=True, *args, **kwargs):
         href = a.get("href")
         if href:
