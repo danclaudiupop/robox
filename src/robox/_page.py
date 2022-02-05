@@ -37,7 +37,10 @@ class BasePage:
 
     @property
     def from_cache(self) -> bool:
-        return self.response.from_cache
+        try:
+            return self.response.from_cache
+        except AttributeError:
+            return False
 
     @cached_property
     def parsed(self) -> BeautifulSoup:
