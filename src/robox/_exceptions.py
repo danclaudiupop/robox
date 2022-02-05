@@ -8,3 +8,7 @@ class MultipleFieldsReturned(RoboxError):
 
 class InvalidValue(RoboxError):
     ...
+
+
+class ForbiddenByRobots(RoboxError):
+    ...

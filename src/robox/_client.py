@@ -33,9 +33,10 @@ from httpx_cache.cache import BaseCache
 
 from robox import LOG
 from robox._download import async_download_file, download_file
-from robox._exceptions import RoboxError
+from robox._exceptions import ForbiddenByRobots, RoboxError
 from robox._history import BrowserHistory
 from robox._page import AsyncPage, Page
+from robox._robots import ask_robots, async_ask_robots
 
 
 class RoboxMixin:
@@ -136,6 +137,7 @@ class Robox(httpx.Client, RoboxMixin):
         cache: tp.Optional[BaseCache] = None,
         cacheable_methods: tp.Tuple[str, ...] = ("GET",),
         cacheable_status_codes: tp.Tuple[int, ...] = (200, 203, 300, 301, 308),
+        obey_robotstxt: bool = False,
     ) -> None:
         self._user_agent = user_agent
         self.raise_on_4xx_5xx = raise_on_4xx_5xx
@@ -145,6 +147,7 @@ class Robox(httpx.Client, RoboxMixin):
         self.cache = cache
         self.cacheable_methods = cacheable_methods
         self.cacheable_status_codes = cacheable_status_codes
+        self.obey_robotstxt = obey_robotstxt
         self.total_requests = 0
         self._history = BrowserHistory()
         self._request_counter = itertools.count(start=1)
@@ -248,6 +251,20 @@ class Robox(httpx.Client, RoboxMixin):
         extensions: dict = None,
     ) -> Page:
         LOG.debug("Making HTTP request. URL: %s, Method: %s", url, method)
+        if self.obey_robotstxt:
+            can_fetch, crawl_delay = ask_robots(url)
+            if not can_fetch:
+                msg = "Forbidden by robots.txt"
+                LOG.debug(msg)
+                raise ForbiddenByRobots(msg)
+
+            if crawl_delay:
+                LOG.debug(
+                    "Waiting %s seconds before next request b/c of crawl-delay",
+                    crawl_delay,
+                )
+                time.sleep(crawl_delay)
+
         time.sleep(random.uniform(*self.delay_between_requests))
         response = self.request(
             method=method,
@@ -320,6 +337,7 @@ class AsyncRobox(httpx.AsyncClient, RoboxMixin):
         cache: tp.Optional[BaseCache] = None,
         cacheable_methods: tp.Tuple[str, ...] = ("GET",),
         cacheable_status_codes: tp.Tuple[int, ...] = (200, 203, 300, 301, 308),
+        obey_robotstxt: bool = False,
     ) -> None:
         self._user_agent = user_agent
         self.raise_on_4xx_5xx = raise_on_4xx_5xx
@@ -329,6 +347,7 @@ class AsyncRobox(httpx.AsyncClient, RoboxMixin):
         self.cache = cache
         self.cacheable_methods = cacheable_methods
         self.cacheable_status_codes = cacheable_status_codes
+        self.obey_robotstxt = obey_robotstxt
         self.total_requests = 0
         self._history = BrowserHistory()
         self._request_counter = itertools.count(start=1)
@@ -432,6 +451,20 @@ class AsyncRobox(httpx.AsyncClient, RoboxMixin):
         extensions: dict = None,
     ) -> AsyncPage:
         LOG.debug("Making HTTP request. URL: %s, Method: %s", url, method)
+        if self.obey_robotstxt:
+            can_fetch, crawl_delay = await async_ask_robots(url)
+            if not can_fetch:
+                msg = "Forbidden by robots.txt"
+                LOG.debug(msg)
+                raise ForbiddenByRobots(msg)
+
+            if crawl_delay:
+                LOG.debug(
+                    "Waiting %s seconds before next request b/c of crawl-delay",
+                    crawl_delay,
+                )
+                await asyncio.sleep(crawl_delay)
+
         await asyncio.sleep(random.uniform(*self.delay_between_requests))
         response = await self.request(
             method=method,

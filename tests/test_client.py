@@ -1,8 +1,11 @@
+from unittest.mock import MagicMock, patch
+
 import httpx
 import pytest
 import respx
 
 from robox import AsyncRobox, DictCache, Robox
+from robox._exceptions import ForbiddenByRobots
 
 TEST_URL = "https://foo.bar"
 
@@ -89,3 +92,14 @@ def test_cache(respx_mock):
         assert not p1.from_cache
         p2 = robox.get(TEST_URL)
         assert p2.from_cache
+
+
+def test_robots(respx_mock):
+    cm = MagicMock()
+    cm.getcode.return_value = 200
+    cm.read.return_value = b"User-agent: *\nDisallow: /"
+    with patch("urllib.request.urlopen", return_value=cm):
+        respx_mock.get(TEST_URL).respond(200)
+        with pytest.raises(ForbiddenByRobots):
+            with Robox(obey_robotstxt=True) as robox:
+                robox.open(TEST_URL)

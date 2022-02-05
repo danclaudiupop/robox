@@ -10,3 +10,7 @@ with Robox() as robox:
     form.fill_in("delivery", value="13:37")
     page = page.submit_form(form)
     assert page.url == "https://httpbin.org/post"
+
+
+with Robox(obey_robotstxt=True) as robox:
+    robox.open("https://news.ycombinator.com/")

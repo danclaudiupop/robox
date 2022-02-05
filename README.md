@@ -13,6 +13,7 @@ Robox has all the standard features of httpx, including async, plus:
 - caching
 - downloading files
 - history
+- understands robots.txt
 
 
 ## Examples
@@ -68,6 +69,8 @@ with Robox(cache=DictCache()) as robox:
     p2 = robox.open("https://httpbin.org/get")
     assert p2.from_cache
 ```
+
+See [examples](https://github.com/danclaudiupop/robox/tree/main/examples) folder for more detailed examples.
 
 ## Installation
 
