@@ -27,5 +27,6 @@ LOG.setLevel(logging.DEBUG)
 from httpx_cache import DictCache, FileCache  # noqa: E402
 
 from robox._client import AsyncRobox, Robox  # noqa: E402
+from robox._options import Options  # noqa: E402
 
-__all__ = ["Robox", "AsyncRobox", "FileCache", "DictCache"]
+__all__ = ["Robox", "AsyncRobox", "Options", "FileCache", "DictCache"]

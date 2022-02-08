@@ -44,7 +44,7 @@ class BasePage:
 
     @cached_property
     def parsed(self) -> BeautifulSoup:
-        return BeautifulSoup(self.content, **self.robox.soup_kwargs)
+        return BeautifulSoup(self.content, **self.robox.options.soup_kwargs)
 
     @cached_property
     def title(self) -> str:

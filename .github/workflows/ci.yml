@@ -40,7 +40,7 @@ jobs:
       - name: Run tests
         run: |
           source .venv/bin/activate
-          pytest -v --cov=src/ --cov-report=xml tests/
+          pytest -v --asyncio-mode=auto --cov=src/ --cov-report=xml tests/
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2

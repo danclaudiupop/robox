@@ -13,6 +13,7 @@ Robox has all the standard features of httpx, including async, plus:
 - caching
 - downloading files
 - history
+- retry
 - understands robots.txt
 
 
@@ -63,11 +64,25 @@ Caching can be easily configured via [httpx-cache](https://obendidi.github.io/ht
 from robox import Robox, DictCache, FileCache
 
 
-with Robox(cache=DictCache()) as robox:
+with Robox(options=Options(cache=DictCache())) as robox:
     p1 = robox.open("https://httpbin.org/get")
     assert not p1.from_cache
     p2 = robox.open("https://httpbin.org/get")
     assert p2.from_cache
+```
+
+Failed requests that are potentially caused by temporary problems such as a connection timeout or HTTP 500 error can be retried:
+
+```python
+with Robox(
+    options=Options(
+        retry=True,
+        retry_max_attempts=2,
+        raise_on_4xx_5xx=True,
+    )
+) as robox:
+    page = robox.open("https://httpbin.org/status/503,200")
+    assert page.status_code == 200
 ```
 
 See [examples](https://github.com/danclaudiupop/robox/tree/main/examples) folder for more detailed examples.

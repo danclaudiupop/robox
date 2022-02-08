@@ -12,3 +12,7 @@ class InvalidValue(RoboxError):
 
 class ForbiddenByRobots(RoboxError):
     ...
+
+
+class RetryError(RoboxError):
+    ...

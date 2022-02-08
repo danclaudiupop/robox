@@ -29,12 +29,12 @@ from httpx._types import (
     VerifyTypes,
 )
 from httpx_cache import AsyncCacheControlTransport, CacheControlTransport
-from httpx_cache.cache import BaseCache
 
 from robox import LOG
 from robox._download import async_download_file, download_file
 from robox._exceptions import ForbiddenByRobots, RoboxError
 from robox._history import BrowserHistory
+from robox._options import Options
 from robox._page import AsyncPage, Page
 from robox._robots import ask_robots, async_ask_robots
 
@@ -49,11 +49,11 @@ class RoboxMixin:
         self.headers["user-agent"] = user_agent
 
     def get_history(self) -> tp.List[tp.Union[Page, AsyncPage]]:
-        return self._history.get_locations()
+        return self.history.get_locations()
 
     @property
     def current_url(self) -> URL:
-        if latest_entry := self._history.latest_entry():
+        if latest_entry := self.history.latest_entry():
             return latest_entry.url
         else:
             raise RoboxError("Not tracking history")
@@ -65,7 +65,7 @@ class RoboxMixin:
         self, response: httpx.Response, page_cls: tp.Union[Page, AsyncPage]
     ) -> tp.Union[Page, AsyncPage]:
         self._format_response_log(response)
-        if self.raise_on_4xx_5xx:
+        if self.options.raise_on_4xx_5xx:
             try:
                 response.raise_for_status()
             except httpx.HTTPStatusError as exc:
@@ -76,8 +76,8 @@ class RoboxMixin:
                 raise exc
 
         page = page_cls(response, robox=self)
-        if self.history:
-            self._history.location = page
+        if self.options.history:
+            self.history.location = page
         return page
 
     @staticmethod
@@ -129,27 +129,11 @@ class Robox(httpx.Client, RoboxMixin):
         transport: httpx.BaseTransport = None,
         app: tp.Callable = None,
         trust_env: bool = True,
-        user_agent: str = None,
-        raise_on_4xx_5xx: bool = False,
-        delay_between_requests: tp.Tuple[float, float] = (0.0, 0.0),
-        soup_kwargs: dict = {"features": "html.parser"},
-        history: bool = True,
-        cache: tp.Optional[BaseCache] = None,
-        cacheable_methods: tp.Tuple[str, ...] = ("GET",),
-        cacheable_status_codes: tp.Tuple[int, ...] = (200, 203, 300, 301, 308),
-        obey_robotstxt: bool = False,
+        options: Options = None,
     ) -> None:
-        self._user_agent = user_agent
-        self.raise_on_4xx_5xx = raise_on_4xx_5xx
-        self.delay_between_requests = delay_between_requests
-        self.soup_kwargs = soup_kwargs
-        self.history = history
-        self.cache = cache
-        self.cacheable_methods = cacheable_methods
-        self.cacheable_status_codes = cacheable_status_codes
-        self.obey_robotstxt = obey_robotstxt
+        self.options = options or Options()
+        self.history = BrowserHistory()
         self.total_requests = 0
-        self._history = BrowserHistory()
         self._request_counter = itertools.count(start=1)
         super().__init__(
             auth=auth,
@@ -194,14 +178,14 @@ class Robox(httpx.Client, RoboxMixin):
             app=app,
             trust_env=trust_env,
         )
-        if self.cache:
+        if self.options.cache:
             if isinstance(_transport, CacheControlTransport):
                 return _transport
             return CacheControlTransport(
                 transport=_transport,
-                cache=self.cache,
-                cacheable_status_codes=self.cacheable_status_codes,
-                cacheable_methods=self.cacheable_methods,
+                cache=self.options.cache,
+                cacheable_status_codes=self.options.cacheable_status_codes,
+                cacheable_methods=self.options.cacheable_methods,
             )
         return _transport
 
@@ -224,12 +208,12 @@ class Robox(httpx.Client, RoboxMixin):
             trust_env=trust_env,
             proxy=proxy,
         )
-        if self.cache:
+        if self.options.cache:
             return CacheControlTransport(
                 transport=_transport,
-                cache=self.cache,
-                cacheable_status_codes=self.cacheable_status_codes,
-                cacheable_methods=self.cacheable_methods,
+                cache=self.options.cache,
+                cacheable_status_codes=self.options.cacheable_status_codes,
+                cacheable_methods=self.options.cacheable_methods,
             )
         return _transport
 
@@ -250,59 +234,63 @@ class Robox(httpx.Client, RoboxMixin):
         timeout: tp.Union[TimeoutTypes, UseClientDefault] = USE_CLIENT_DEFAULT,
         extensions: dict = None,
     ) -> Page:
-        LOG.debug("Making HTTP request. URL: %s, Method: %s", url, method)
-        if self.obey_robotstxt:
-            can_fetch, crawl_delay = ask_robots(url)
-            if not can_fetch:
-                msg = "Forbidden by robots.txt"
-                LOG.debug(msg)
-                raise ForbiddenByRobots(msg)
+        def _open():
+            LOG.debug("Making HTTP request. URL: %s, Method: %s", url, method)
+            if self.options.obey_robotstxt:
+                can_fetch, crawl_delay = ask_robots(url)
+                if not can_fetch:
+                    msg = "Forbidden by robots.txt"
+                    LOG.debug(msg)
+                    raise ForbiddenByRobots(msg)
 
-            if crawl_delay:
-                LOG.debug(
-                    "Waiting %s seconds before next request b/c of crawl-delay",
-                    crawl_delay,
-                )
-                time.sleep(crawl_delay)
+                if crawl_delay:
+                    LOG.debug(
+                        "Waiting %s seconds before next request b/c of crawl-delay",
+                        crawl_delay,
+                    )
+                    time.sleep(crawl_delay)
 
-        time.sleep(random.uniform(*self.delay_between_requests))
-        response = self.request(
-            method=method,
-            url=url,
-            content=content,
-            data=data,
-            files=files,
-            json=json,
-            params=params,
-            headers=headers,
-            cookies=cookies,
-            auth=auth,
-            follow_redirects=follow_redirects,
-            timeout=timeout,
-            extensions=extensions,
-        )
-        self._increment_request_counter()
-        return self._build_page_response(response, Page)
+            time.sleep(random.uniform(*self.options.delay_between_requests))
+            response = self.request(
+                method=method,
+                url=url,
+                content=content,
+                data=data,
+                files=files,
+                json=json,
+                params=params,
+                headers=headers,
+                cookies=cookies,
+                auth=auth,
+                follow_redirects=follow_redirects,
+                timeout=timeout,
+                extensions=extensions,
+            )
+            self._increment_request_counter()
+            return self._build_page_response(response, Page)
+
+        _open.method = method
+        return self.options._init_retry(_open)()
 
     def download_file(self, *, url: str, destination_folder: str) -> str:
         return download_file(self, url, destination_folder)
 
     def refresh(self) -> Page:
-        page = self._history.location
+        page = self.history.location
         return self.open(page.url)
 
     def forward(self, n: int = 1) -> Page:
         if not len(self.get_history()):
             raise ValueError("No history to forward")
-        self._history.forward(n)
-        page = self._history.location
+        self.history.forward(n)
+        page = self.history.location
         return self.open(page.url)
 
     def back(self, n: int = 1) -> Page:
         if not len(self.get_history()):
             raise ValueError("No history to back")
-        self._history.back(n)
-        page = self._history.location
+        self.history.back(n)
+        page = self.history.location
         return self.open(page.url)
 
 
@@ -329,27 +317,11 @@ class AsyncRobox(httpx.AsyncClient, RoboxMixin):
         transport: httpx.AsyncBaseTransport = None,
         app: tp.Callable = None,
         trust_env: bool = True,
-        user_agent: str = None,
-        raise_on_4xx_5xx: bool = False,
-        delay_between_requests: tp.Tuple[float, float] = (0.0, 0.0),
-        soup_kwargs: dict = {"features": "html.parser"},
-        history: bool = True,
-        cache: tp.Optional[BaseCache] = None,
-        cacheable_methods: tp.Tuple[str, ...] = ("GET",),
-        cacheable_status_codes: tp.Tuple[int, ...] = (200, 203, 300, 301, 308),
-        obey_robotstxt: bool = False,
+        options: Options = None,
     ) -> None:
-        self._user_agent = user_agent
-        self.raise_on_4xx_5xx = raise_on_4xx_5xx
-        self.delay_between_requests = delay_between_requests
-        self.soup_kwargs = soup_kwargs
-        self.history = history
-        self.cache = cache
-        self.cacheable_methods = cacheable_methods
-        self.cacheable_status_codes = cacheable_status_codes
-        self.obey_robotstxt = obey_robotstxt
+        self.options = options or Options()
+        self.history = BrowserHistory()
         self.total_requests = 0
-        self._history = BrowserHistory()
         self._request_counter = itertools.count(start=1)
         super().__init__(
             auth=auth,
@@ -394,14 +366,14 @@ class AsyncRobox(httpx.AsyncClient, RoboxMixin):
             app=app,
             trust_env=trust_env,
         )
-        if self.cache:
+        if self.options.cache:
             if isinstance(_transport, AsyncCacheControlTransport):
                 return _transport
             return AsyncCacheControlTransport(
                 transport=_transport,
-                cache=self.cache,
-                cacheable_status_codes=self.cacheable_status_codes,
-                cacheable_methods=self.cacheable_methods,
+                cache=self.options.cache,
+                cacheable_status_codes=self.options.cacheable_status_codes,
+                cacheable_methods=self.options.cacheable_methods,
             )
         return _transport
 
@@ -424,12 +396,12 @@ class AsyncRobox(httpx.AsyncClient, RoboxMixin):
             trust_env=trust_env,
             proxy=proxy,
         )
-        if self.cache:
+        if self.options.cache:
             return AsyncCacheControlTransport(
                 transport=_transport,
-                cache=self.cache,
-                cacheable_status_codes=self.cacheable_status_codes,
-                cacheable_methods=self.cacheable_methods,
+                cache=self.options.cache,
+                cacheable_status_codes=self.options.cacheable_status_codes,
+                cacheable_methods=self.options.cacheable_methods,
             )
         return _transport
 
@@ -450,57 +422,61 @@ class AsyncRobox(httpx.AsyncClient, RoboxMixin):
         timeout: tp.Union[TimeoutTypes, UseClientDefault] = USE_CLIENT_DEFAULT,
         extensions: dict = None,
     ) -> AsyncPage:
-        LOG.debug("Making HTTP request. URL: %s, Method: %s", url, method)
-        if self.obey_robotstxt:
-            can_fetch, crawl_delay = await async_ask_robots(url)
-            if not can_fetch:
-                msg = "Forbidden by robots.txt"
-                LOG.debug(msg)
-                raise ForbiddenByRobots(msg)
+        async def _open():
+            LOG.debug("Making HTTP request. URL: %s, Method: %s", url, method)
+            if self.options.obey_robotstxt:
+                can_fetch, crawl_delay = await async_ask_robots(url)
+                if not can_fetch:
+                    msg = "Forbidden by robots.txt"
+                    LOG.debug(msg)
+                    raise ForbiddenByRobots(msg)
 
-            if crawl_delay:
-                LOG.debug(
-                    "Waiting %s seconds before next request b/c of crawl-delay",
-                    crawl_delay,
-                )
-                await asyncio.sleep(crawl_delay)
+                if crawl_delay:
+                    LOG.debug(
+                        "Waiting %s seconds before next request b/c of crawl-delay",
+                        crawl_delay,
+                    )
+                    await asyncio.sleep(crawl_delay)
 
-        await asyncio.sleep(random.uniform(*self.delay_between_requests))
-        response = await self.request(
-            method=method,
-            url=url,
-            content=content,
-            data=data,
-            files=files,
-            json=json,
-            params=params,
-            headers=headers,
-            cookies=cookies,
-            auth=auth,
-            follow_redirects=follow_redirects,
-            timeout=timeout,
-            extensions=extensions,
-        )
-        self._increment_request_counter()
-        return self._build_page_response(response, AsyncPage)
+            await asyncio.sleep(random.uniform(*self.options.delay_between_requests))
+            response = await self.request(
+                method=method,
+                url=url,
+                content=content,
+                data=data,
+                files=files,
+                json=json,
+                params=params,
+                headers=headers,
+                cookies=cookies,
+                auth=auth,
+                follow_redirects=follow_redirects,
+                timeout=timeout,
+                extensions=extensions,
+            )
+            self._increment_request_counter()
+            return self._build_page_response(response, AsyncPage)
+
+        _open.method = method
+        return await self.options._init_retry(_open)()
 
     async def download_file(self, *, url: str, destination_folder: str) -> str:
         return await async_download_file(self, url, destination_folder)
 
     async def refresh(self) -> AsyncPage:
-        page = self._history.location
+        page = self.history.location
         return await self.open(page.url)
 
     async def forward(self, n: int = 1) -> AsyncPage:
         if not len(self.get_history()):
             raise ValueError("No history to forward")
-        self._history.forward(n)
-        page = self._history.location
+        self.history.forward(n)
+        page = self.history.location
         return await self.open(page.url)
 
     async def back(self, n: int = 1) -> AsyncPage:
         if not len(self.get_history()):
             raise ValueError("No history to back")
-        self._history.back(n)
-        page = self._history.location
+        self.history.back(n)
+        page = self.history.location
         return await self.open(page.url)

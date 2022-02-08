@@ -4,8 +4,8 @@ import httpx
 import pytest
 import respx
 
-from robox import AsyncRobox, DictCache, Robox
-from robox._exceptions import ForbiddenByRobots
+from robox import AsyncRobox, DictCache, Options, Robox
+from robox._exceptions import ForbiddenByRobots, RetryError
 
 TEST_URL = "https://foo.bar"
 
@@ -82,15 +82,25 @@ async def test_async_download(respx_mock, tmpdir):
 def test_raise_on_4xx_5xx(respx_mock):
     respx_mock.get(TEST_URL).respond(400)
     with pytest.raises(httpx.HTTPStatusError):
-        Robox(raise_on_4xx_5xx=True).open(TEST_URL)
+        Robox(options=Options(raise_on_4xx_5xx=True)).open(TEST_URL)
 
 
 def test_cache(respx_mock):
     respx_mock.get(TEST_URL).respond(200, html="<html>foo</html>")
-    with Robox(cache=DictCache()) as robox:
-        p1 = robox.get(TEST_URL)
+    with Robox(options=Options(cache=DictCache())) as robox:
+        p1 = robox.open(TEST_URL)
         assert not p1.from_cache
-        p2 = robox.get(TEST_URL)
+        p2 = robox.open(TEST_URL)
+        assert p2.from_cache
+
+
+@pytest.mark.asyncio
+async def test_async_cache(respx_mock):
+    respx_mock.get(TEST_URL).respond(200, html="<html>foo</html>")
+    async with AsyncRobox(options=Options(cache=DictCache())) as robox:
+        p1 = await robox.open(TEST_URL)
+        assert not p1.from_cache
+        p2 = await robox.open(TEST_URL)
         assert p2.from_cache
 
 
@@ -101,5 +111,42 @@ def test_robots(respx_mock):
     with patch("urllib.request.urlopen", return_value=cm):
         respx_mock.get(TEST_URL).respond(200)
         with pytest.raises(ForbiddenByRobots):
-            with Robox(obey_robotstxt=True) as robox:
+            with Robox(options=Options(obey_robotstxt=True)) as robox:
                 robox.open(TEST_URL)
+
+
+def test_retry(respx_mock):
+    respx_mock.get(TEST_URL).mock(side_effect=httpx.ConnectError)
+    with pytest.raises(RetryError):
+        with Robox(options=Options(retry=True, retry_max_attempts=1)) as robox:
+            robox.open(TEST_URL)
+
+
+def test_retry_raise_on_4xx_5xx(respx_mock):
+    respx_mock.get(TEST_URL).respond(500)
+    with pytest.raises(RetryError):
+        with Robox(
+            options=Options(retry=True, retry_max_attempts=1, raise_on_4xx_5xx=True)
+        ) as robox:
+            robox.open(TEST_URL)
+
+
+@pytest.mark.asyncio
+async def test_async_retry(respx_mock):
+    respx_mock.get(TEST_URL).respond(500)
+    with pytest.raises(RetryError):
+        async with AsyncRobox(
+            options=Options(retry=True, retry_max_attempts=1)
+        ) as robox:
+            await robox.open(TEST_URL)
+
+
+def test_retry_recovarable(respx_mock):
+    route = respx_mock.get(TEST_URL)
+    route.side_effect = [
+        httpx.Response(500),
+        httpx.Response(200),
+    ]
+    with Robox(options=Options(retry=True, retry_max_attempts=2)) as robox:
+        page = robox.open(TEST_URL)
+        assert page.status_code == 200

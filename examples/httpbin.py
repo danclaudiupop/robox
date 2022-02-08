@@ -1,4 +1,4 @@
-from robox import Robox
+from robox import Options, Robox
 
 with Robox() as robox:
     page = robox.open("https://httpbin.org/forms/post")
@@ -12,5 +12,5 @@ with Robox() as robox:
     assert page.url == "https://httpbin.org/post"
 
 
-with Robox(obey_robotstxt=True) as robox:
+with Robox(options=Options(obey_robotstxt=True)) as robox:
     robox.open("https://news.ycombinator.com/")
