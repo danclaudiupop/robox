@@ -5,7 +5,7 @@
 [![PyPI version](https://badge.fury.io/py/robox.svg)](https://badge.fury.io/py/robox)
 
 ## Overview
-Robox is a simple library with a clean interface for exploring/scraping the web or testing a website you’re developing. Robox can fetch a page, click on links and buttons, and fill out and submit forms. Robox is built on top of two excelent libraries: [httpx](https://www.google.com) and [beautifulsoup4](https://www.crummy.com/software/BeautifulSoup/bs4/doc/).
+Robox is a simple library with a clean interface for exploring/scraping the web or testing a website you’re developing. Robox can fetch a page, click on links and buttons, and fill out and submit forms. Robox is built on top of two excelent libraries: [httpx](https://www.python-httpx.org/) and [beautifulsoup4](https://www.crummy.com/software/BeautifulSoup/bs4/doc/).
 
 ---
 Robox has all the standard features of httpx, including async, plus:
