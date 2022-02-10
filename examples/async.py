@@ -12,7 +12,8 @@ async def main():
         consent_page = await page.submit_form(form)
         form = consent_page.get_form()
         page = await consent_page.submit_form(form)
-        pprint(list(page.get_links_by_text("python")))
+        links = page.get_links()
+        pprint([link for link in links if "Python" in link.text])
 
 
 asyncio.run(main())

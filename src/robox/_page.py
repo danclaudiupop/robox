@@ -64,7 +64,7 @@ class BasePage:
             return Form(form)
 
     def get_forms(self, *args: tp.Any, **kwargs: tp.Any) -> tp.List[Form]:
-        forms = self.find_all(name="form", *args, **kwargs)
+        forms = self.parsed.find_all(name="form", *args, **kwargs)
         return [Form(form) for form in forms]
 
     def _prepare_referer_header(self) -> tp.Dict[str, str]:
@@ -93,13 +93,13 @@ class BasePage:
             if re.search(regex, link.href)
         ]
 
-    def get_links_by_text(
+    def _get_links_by_text(
         self, text: str, *args: tp.Any, **kwargs: tp.Any
     ) -> tp.List[Link]:
         return [
             link
             for link in self.get_links(*args, **kwargs)
-            if text.lower() in link.text.lower()
+            if text.lower() == link.text.lower()
         ]
 
     def _get_link_text(self, text: str) -> Link:
@@ -150,7 +150,7 @@ class Page(BasePage):
         return self.robox.open(urljoin(str(self.url), tag["href"]))
 
     def follow_link_by_text(self, text: str) -> "Page":
-        link = self._prepare_link_text(text)
+        link = self._get_link_text(text)
         return self.follow_link(link)
 
 
