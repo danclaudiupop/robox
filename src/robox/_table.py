@@ -1,3 +1,4 @@
+import reprlib
 import typing as tp
 from itertools import product
 
@@ -59,3 +60,6 @@ class Table:
             rowspans = {c: s - 1 for c, s in rowspans.items() if s > 1}
 
         return table
+
+    def __repr__(self) -> str:
+        return reprlib.repr(self.get_rows())
