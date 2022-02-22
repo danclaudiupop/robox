@@ -52,3 +52,18 @@ def test_get_forms(page):
     assert len(forms) == 2
     assert isinstance(forms[0], Form)
     assert isinstance(forms[1], Form)
+
+
+def test_no_form(page):
+    with pytest.raises(ValueError):
+        page(html="<html></html>").get_form()
+
+
+def test_get_no_forms(page):
+    with pytest.raises(ValueError):
+        page(html="<html></html>").get_forms()
+
+
+def test_get_no_tables(page):
+    with pytest.raises(ValueError):
+        page(html="<html></html>").get_tables()
