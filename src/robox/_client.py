@@ -36,6 +36,7 @@ from robox._exceptions import ForbiddenByRobots, RoboxError
 from robox._history import BrowserHistory
 from robox._options import Options
 from robox._page import AsyncPage, Page
+from robox._retry import call_with_retry
 from robox._robots import ask_robots, async_ask_robots
 
 
@@ -270,7 +271,7 @@ class Robox(httpx.Client, RoboxMixin):
             return self._build_page_response(response, Page)
 
         _open.method = method
-        return self.options._init_retry(_open)()
+        return call_with_retry(_open, self.options)()
 
     def download_file(self, *, url: str, destination_folder: str) -> str:
         return download_file(self, url, destination_folder)
@@ -458,7 +459,7 @@ class AsyncRobox(httpx.AsyncClient, RoboxMixin):
             return self._build_page_response(response, AsyncPage)
 
         _open.method = method
-        return await self.options._init_retry(_open)()
+        return await call_with_retry(_open, self.options)()
 
     async def download_file(self, *, url: str, destination_folder: str) -> str:
         return await async_download_file(self, url, destination_folder)
