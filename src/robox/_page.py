@@ -17,6 +17,7 @@ from robox._link import (
     remove_duplicate_links,
     remove_page_jumps_from_links,
 )
+from robox._table import Table
 
 if TYPE_CHECKING:
     from robox import Robox
@@ -60,12 +61,21 @@ class BasePage:
 
     def get_form(self, *args: tp.Any, **kwargs: tp.Any) -> tp.Optional[Form]:
         form = self.parsed.find(name="form", *args, **kwargs)
-        if form:
-            return Form(form)
+        if not form:
+            raise ValueError("No form found")
+        return Form(form)
 
     def get_forms(self, *args: tp.Any, **kwargs: tp.Any) -> tp.List[Form]:
         forms = self.parsed.find_all(name="form", *args, **kwargs)
+        if not forms:
+            raise ValueError("No forms found")
         return [Form(form) for form in forms]
+
+    def get_tables(self, *args: tp.Any, **kwargs: tp.Any) -> tp.List[Table]:
+        tables = self.parsed.find_all(name="table", *args, **kwargs)
+        if not tables:
+            raise ValueError("No tables found")
+        return [Table(table) for table in tables]
 
     def _prepare_referer_header(self) -> tp.Dict[str, str]:
         headers = {}

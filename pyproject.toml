@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "robox"
-version = "0.2.1"
+version = "0.2.2"
 description = "Robox is a simple library for exploring/scraping the web or testing a website you’re developing."
 authors = ["Dan Claudiu Pop <danclaudiupop@gmail.com>"]
 license = "BSD 3"

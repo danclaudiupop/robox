@@ -142,6 +142,13 @@ class Form:
                 serialize(field, payload, key)
         return payload
 
+    def __repr__(self) -> str:
+        msg = f"<{type(self).__name__} method={self.method}>"
+        if self.action:
+            msg += f" action={self.action}"
+        msg += f" fields={self.fields.list()}>"
+        return msg
+
 
 @singledispatch
 def serialize(field: Field, payload: tp.Dict[str, dict], key: str) -> None:

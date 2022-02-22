@@ -14,6 +14,7 @@ Robox has all the standard features of httpx, including async, plus:
 - downloading files
 - history
 - retry
+- parsing tables
 - understands robots.txt
 
 
@@ -84,6 +85,21 @@ with Robox(
 ) as robox:
     page = robox.open("https://httpbin.org/status/503,200")
     assert page.status_code == 200
+```
+
+Parse tables with rowspan and colspan:
+```python
+with Robox() as robox:
+    page = robox.open("https://html.com/tables/rowspan-colspan/")
+    tables = page.get_tables()
+    for table in tables:
+        pprint(table.get_rows())
+```
+```bash
+[['65', '65', '40', '40', '20', '20'],
+ ['Men', 'Women', 'Men', 'Women', 'Men', 'Women'],
+ ['82', '85', '78', '82', '77', '81']]
+ ...
 ```
 
 See [examples](https://github.com/danclaudiupop/robox/tree/main/examples) folder for more detailed examples.
