@@ -102,6 +102,27 @@ with Robox() as robox:
  ...
 ```
 
+An example no how to reuse authentication state with cookies:
+```python
+import os
+from robox import Options, Robox
+
+with Robox() as robox:
+    page = robox.open("https://news.python.sc/accounts/login/")
+    form = page.get_form()
+    form.fill_in("username", value=os.getenv("USERNAME"))
+    form.fill_in("password", value=os.getenv("PASSWORD"))
+    page.submit_form(form)
+    robox.save_cookies("cookies.json")
+
+
+with Robox() as robox:
+    robox.load_cookies("cookies.json")
+    page = robox.open("https://news.python.sc/")
+    element = page.parsed.find("button", attrs={"class": "logout-button"})
+    assert element.text == "logout"
+```
+
 See [examples](https://github.com/danclaudiupop/robox/tree/main/examples) folder for more detailed examples.
 
 ## Installation
