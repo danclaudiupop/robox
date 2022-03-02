@@ -1,3 +1,5 @@
+import json
+from http.cookiejar import Cookie, CookieJar
 from unittest.mock import MagicMock, patch
 
 import httpx
@@ -150,3 +152,41 @@ def test_retry_recovarable(respx_mock):
     with Robox(options=Options(retry=True, retry_max_attempts=2)) as robox:
         page = robox.open(TEST_URL)
         assert page.status_code == 200
+
+
+def test_save_and_load_cookies(respx_mock, tmp_path):
+    cookies = CookieJar()
+    cookie = Cookie(
+        version=0,
+        name="example-name",
+        value="example-value",
+        port=None,
+        port_specified=False,
+        domain="",
+        domain_specified=False,
+        domain_initial_dot=False,
+        path="/",
+        path_specified=True,
+        secure=False,
+        expires=None,
+        discard=True,
+        comment=None,
+        comment_url=None,
+        rest={"HttpOnly": ""},
+        rfc2109=False,
+    )
+    cookies.set_cookie(cookie)
+
+    respx_mock.get(TEST_URL).respond(200)
+    with Robox(cookies=cookies) as robox:
+        robox.open(TEST_URL)
+        robox.save_cookies(tmp_path / "cookies.json")
+        with open(tmp_path / "cookies.json") as f:
+            loaded_cookies = json.load(f)
+        assert loaded_cookies == {"example-name": "example-value"}
+        assert len(robox.cookies) == 1
+
+    with Robox() as robox:
+        robox.load_cookies(tmp_path / "cookies.json")
+        robox.open(TEST_URL)
+        assert len(robox.cookies) == 1
