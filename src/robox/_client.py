@@ -1,8 +1,10 @@
 import asyncio
 import itertools
+import json
 import random
 import time
 import typing as tp
+from pathlib import Path
 
 import httpx
 from httpx._client import USE_CLIENT_DEFAULT, UseClientDefault
@@ -58,6 +60,20 @@ class RoboxMixin:
             return latest_entry.url
         else:
             raise RoboxError("Not tracking history")
+
+    def save_cookies(self, filename: str) -> None:
+        cookies = {}
+        for cookie in self.cookies.jar:
+            cookies[cookie.name] = cookie.value
+        with open(filename, "w") as f:
+            json.dump(cookies, f)
+
+    def load_cookies(self, filename: str) -> None:
+        if not Path(filename).is_file():
+            return None
+        with open(filename, "r") as f:
+            cookies = httpx.Cookies(json.load(f))
+            self.cookies = cookies
 
     def _increment_request_counter(self) -> None:
         self.total_requests = next(self._request_counter)
