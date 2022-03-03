@@ -189,5 +189,4 @@ def test_save_and_load_cookies(respx_mock, tmp_path):
     with Robox() as robox:
         robox.load_cookies(tmp_path / "cookies.json")
         robox.open(TEST_URL)
-        assert robox.cookies
         assert len(robox.cookies) == 1
